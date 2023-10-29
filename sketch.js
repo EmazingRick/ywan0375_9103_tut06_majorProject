@@ -32,4 +32,6 @@ function setup() {
 
 function draw() {
   background(220);
+
+  yellowRects.forEach(r => r.draw());
 }
