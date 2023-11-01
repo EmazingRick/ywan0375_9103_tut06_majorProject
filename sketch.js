@@ -6,6 +6,7 @@ let redRects = [];
 let grayRects = [];
 let extraYellowRects = [];
 let pixelLength = 20;
+let yellowRegions = [];
 
 
 
@@ -165,12 +166,18 @@ function setup() {
   grayRects.push(new grayRect(400,900,pixelLength*3,60));
   grayRects.push(new grayRect(660,420,pixelLength*3,60));
   grayRects.push(new grayRect(640,540,pixelLength*5,20));
+
+  
 }
 
 function draw() {
   background(240);
 
   yellowRects.forEach(r => r.draw());
+
+  detectYellowRegions();
+  generateRandomRectangles();
+
   extraYellowRects.forEach(r => r.draw());
   blueRects.forEach(r => r.draw());
   redRects.forEach(r => r.draw());
@@ -179,3 +186,29 @@ function draw() {
 
 }
 
+function detectYellowRegions() {
+  loadPixels();
+  for (let x = 0; x < canvasWidth; x += pixelLength) {
+    for (let y = 0; y < canvasHeight; y += pixelLength) {
+      let col = get(x, y);
+      if (col[0] === 250 && col[1] === 201 && col[2] === 1) {
+        yellowRegions.push({ x, y });
+      }
+    }
+  }
+  updatePixels();
+}
+
+function generateRandomRectangles() {
+  noLoop();
+  let colors = ["#225095","#dd0100","#c8c8c8"];
+
+  for (let i = 0; i < 300; i++) {
+    let region = random(yellowRegions);
+    let colorIndex = floor(random(colors.length));
+
+    noStroke();
+    fill(colors[colorIndex]);
+    rect(region.x, region.y, pixelLength, pixelLength);
+  }
+}
