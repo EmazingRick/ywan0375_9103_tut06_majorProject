@@ -3,6 +3,7 @@ let canvasWidth = canvasSize;
 let canvasHeight = canvasSize;
 let segmentNum = 50;
 let pixelLength = canvasSize / segmentNum;
+let randomBlockNum = 10;
 
 let yellowRects = [];
 let blueRects = [];
@@ -10,8 +11,8 @@ let redRects = [];
 let grayRects = [];
 let extraYellowRects = [];
 let yellowRegions = [];
-
-
+let randomBlocks1 = [];
+let randomBlocks2 = [];
 
 class yellowRect{
   constructor(x,y,width,height,rotation){
@@ -101,6 +102,42 @@ class grayRect{
   }
 }
 
+class randomBlock{
+    constructor(x,y,minPoint,maxPoint,rotation){
+      this.x = x;
+      this.y = y;
+      this.minPoint = minPoint;
+      this.maxPoint = maxPoint;
+      this.width = pixelLength;
+      this.height = pixelLength;
+      this.rotation = rotation ?? 0;
+      this.xSpeed = random(3,7);
+      this.ySpeed = random(3,7);
+      this.xDirection = 1;
+      this.yDirection = 1;
+
+      let colors = ["#225095","#dd0100","#c8c8c8"];
+      let colorIndex = floor(random(colors.length));
+      this.color = colors[colorIndex];
+
+      if(this.y + pixelLength > canvasHeight || this.y < pixelLength){
+        this.yDirection *= -1;
+      }
+    }
+  
+    draw(){
+      push();
+      translate(this.x,this.y);
+      rotate(this.rotation);
+  
+      noStroke();
+      fill(this.color);
+      rect(0,0,this.width,this.height);
+  
+      pop();
+    }
+  }
+
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
 
@@ -177,6 +214,22 @@ function setup() {
   grayRects.push(new grayRect(pixelLength*20,pixelLength*45,pixelLength*3,pixelLength*3));
   grayRects.push(new grayRect(pixelLength*33,pixelLength*21,pixelLength*3,pixelLength*3));
   grayRects.push(new grayRect(pixelLength*32,pixelLength*27,pixelLength*5,pixelLength));
+
+
+  for(let i = 0; i < yellowRects.length; i++){
+    //create ramdom blocks in the horizontal yellow lines
+    if((yellowRects[i].width > yellowRects[i].height) && yellowRects[i].width > 100){
+        for(let j = 0; j < floor(random(5,randomBlockNum)); j++){
+            randomBlocks1.push(new randomBlock(random((yellowRects[i].x),(yellowRects[i].x+yellowRects[i].width-pixelLength)),yellowRects[i].y,yellowRects[i].x,yellowRects[i].x+yellowRects[i].width-pixelLength));
+        }
+    }
+    //create ramdom blocks in the vertical yellow lines
+    if((yellowRects[i].width < yellowRects[i].height) && yellowRects[i].height > 100){
+        for(let j = 0; j < floor(random(5,randomBlockNum)); j++){
+            randomBlocks2.push(new randomBlock(yellowRects[i].x,random((yellowRects[i].y),(yellowRects[i].y+yellowRects[i].height-pixelLength)),yellowRects[i].y,yellowRects[i].y+yellowRects[i].height-pixelLength));
+        }
+    }
+  }
 }
 
 function draw() {
@@ -184,17 +237,33 @@ function draw() {
 
     yellowRects.forEach(r => r.draw());
 
-    detectYellowRegions();
-    generateRandomRectangles();
 
+    randomBlocks1.forEach(r => r.draw());
+    randomBlocks2.forEach(r => r.draw());
+
+    for(let i = 0; i < randomBlocks1.length; i++){
+        randomBlocks1[i].x = randomBlocks1[i].x + randomBlocks1[i].xSpeed * randomBlocks1[i].xDirection;
+
+        if(randomBlocks1[i].x > randomBlocks1[i].maxPoint || randomBlocks1[i].x < randomBlocks1[i].minPoint){
+            randomBlocks1[i].xDirection *= -1;
+          }
+    }
+
+    for(let i = 0; i < randomBlocks2.length; i++){
+        randomBlocks2[i].y = randomBlocks2[i].y + randomBlocks2[i].ySpeed * randomBlocks2[i].yDirection;
+
+        if(randomBlocks2[i].y > randomBlocks2[i].maxPoint || randomBlocks2[i].y < randomBlocks2[i].minPoint){
+            randomBlocks2[i].yDirection *= -1;
+          }
+    }
+    
     extraYellowRects.forEach(r => r.draw());
     blueRects.forEach(r => r.draw());
     redRects.forEach(r => r.draw());
     grayRects.forEach(r => r.draw());
-
-
 }
 
+//search for all the yellow region and store them into an array
 function detectYellowRegions() {
   loadPixels();
   for (let x = 0; x < canvasWidth; x += pixelLength) {
@@ -206,18 +275,4 @@ function detectYellowRegions() {
     }
   }
   updatePixels();
-}
-
-function generateRandomRectangles() {
-  noLoop();
-  let colors = ["#225095","#dd0100","#c8c8c8"];
-
-  for (let i = 0; i < 300; i++) {
-    let region = random(yellowRegions);
-    let colorIndex = floor(random(colors.length));
-
-    noStroke();
-    fill(colors[colorIndex]);
-    rect(region.x, region.y, pixelLength, pixelLength);
-  }
 }
